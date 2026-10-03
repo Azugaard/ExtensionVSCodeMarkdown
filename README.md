@@ -1,65 +1,290 @@
-# markdown-visualizer README
+# Markdown Visualizer for VS Code
 
-This is the README for your extension "markdown-visualizer". After writing up a brief description, we recommend including the following sections.
+A Visual Studio Code extension for rendering Markdown documents with support for Marp presentations, Mermaid diagrams, and KaTeX mathematical expressions.
 
-## Features
+The project explores VS Code extension development, Webview-based interfaces, Markdown processing, client-side rendering, and synchronization between the editor and the generated preview.
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+## Overview
 
-For example if there is an image subfolder under your extension project workspace:
+Markdown Visualizer provides a dedicated preview panel inside VS Code.
 
-\!\[feature X\]\(images/feature-x.png\)
+The extension:
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+- renders Markdown documents using Marp;
+- supports Mermaid diagrams;
+- supports mathematical expressions through KaTeX;
+- updates the preview when the Markdown document changes;
+- synchronizes the preview position with the editor;
+- runs the rendered document inside a VS Code Webview.
 
-## Requirements
+## Technical Stack
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+- JavaScript
+- Node.js
+- Visual Studio Code Extension API
+- VS Code Webviews
+- Marp
+- Mermaid
+- KaTeX
+- Markdown-it
+- Marked
+- Unified / Remark
+- Puppeteer
+- ESLint
+- VS Code Extension Testing
 
-## Extension Settings
+## Architecture
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+The extension is built around a VS Code Webview.
 
-For example:
+```text
+                         VS Code
+                            |
+                            v
+                  +-------------------+
+                  |  Extension Host   |
+                  |                   |
+                  |  extension.js     |
+                  +---------+---------+
+                            |
+                            | Markdown content
+                            v
+                  +-------------------+
+                  | Markdown / Marp   |
+                  | Rendering         |
+                  +---------+---------+
+                            |
+                            | Generated HTML / CSS
+                            v
+                  +-------------------+
+                  |    VS Code        |
+                  |     Webview       |
+                  +----+---------+----+
+                       |         |
+                       v         v
+                   Mermaid     KaTeX
+                       |
+                       v
+                    SVG / HTML
+```
 
-This extension contributes the following settings:
+The main extension entry point registers the preview command, creates the Webview, renders the document, and listens for document changes.
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+## Main Components
 
-## Known Issues
+### `extension.js`
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+The main VS Code extension entry point.
 
-## Release Notes
+Responsibilities include:
 
-Users appreciate release notes as you update your extension.
+- registering the `visualizer.markdownPreview` command;
+- validating that the active document is Markdown;
+- creating the Webview panel;
+- rendering Markdown through Marp;
+- loading Mermaid and KaTeX in the Webview;
+- updating the preview when the source document changes;
+- connecting the editor to the scroll synchronization mechanism.
 
-### 1.0.0
+The Webview is opened in a second editor column and allows scripts required by the preview renderer.
 
-Initial release of ...
+### `scroll.js`
 
-### 1.0.1
+Implements synchronization between the Markdown editor and the preview.
 
-Fixed issue #.
+The implementation observes the editor's visible ranges and calculates a weighted scroll position. Markdown slide separators receive a significantly higher weight so that scrolling behaves more naturally for Marp presentations.
 
-### 1.1.0
+### `renderer.mjs`
 
-Added features X, Y, and Z.
+Contains an alternative Markdown processing pipeline based on the Unified ecosystem.
+
+It uses:
+
+- `remark-parse`
+- `remark-gfm`
+- `remark-mermaid`
+- `remark-html`
+
+This component currently exists separately from the main Marp-based rendering path.
+
+## Webview Security
+
+The preview is implemented using a VS Code Webview with a Content Security Policy.
+
+The extension generates a nonce for its inline scripts and defines explicit resource policies for scripts, styles, fonts, and images.
+
+The current CSP includes:
+
+```text
+default-src 'none'
+script-src 'nonce-...' https://cdn.jsdelivr.net 'unsafe-eval'
+style-src 'unsafe-inline' https://cdn.jsdelivr.net
+font-src https://cdn.jsdelivr.net
+img-src https://cdn.jsdelivr.net data:
+```
+
+This is an area of the project that can be further hardened, particularly around external resources and the use of `unsafe-eval`.
+
+The project therefore provides a practical environment for exploring the security considerations of VS Code Webviews and client-side content rendering.
+
+## Markdown Rendering
+
+The extension uses Marp as the primary rendering engine:
+
+```javascript
+const marp = new Marp({
+    html: true,
+    math: 'katex'
+});
+
+const { html, css } = marp.render(markdown);
+```
+
+Mermaid code blocks are subsequently detected and rendered as SVG inside the Webview.
+
+Mathematical expressions are rendered using KaTeX.
+
+## Example
+
+### Mermaid
+
+````markdown
+```mermaid
+graph TD
+    Client --> Firewall
+    Firewall --> Server
+```
+````
+
+### Mathematical expressions
+
+```markdown
+$$
+E = mc^2
+$$
+```
+
+### Marp
+
+```markdown
+---
+marp: true
+---
+
+# First slide
 
 ---
 
-## Working with Markdown
+# Second slide
+```
 
-You can author your README using Visual Studio Code.  Here are some useful editor keyboard shortcuts:
+## Installation
 
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux)
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux)
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets
+### Requirements
 
-## For more information
+- Visual Studio Code
+- Node.js
+- npm
 
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
+### Setup
 
-**Enjoy!**
+Clone the repository:
+
+```bash
+git clone https://github.com/Azugaard/ExtensionVSCodeMarkdown.git
+cd ExtensionVSCodeMarkdown
+```
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+### Run the extension
+
+Open the project in VS Code and press `F5`.
+
+This launches a new Extension Development Host.
+
+Open a Markdown file and execute:
+
+```text
+Markdown Preview
+```
+
+## Development
+
+Lint the project:
+
+```bash
+npm run lint
+```
+
+Run the test suite:
+
+```bash
+npm test
+```
+
+The project is configured with ESLint and the VS Code extension testing framework.
+
+## Project Structure
+
+```text
+ExtensionVSCodeMarkdown/
+├── .vscode/
+├── test/
+├── extension.js
+├── renderer.mjs
+├── scroll.js
+├── templates.json
+├── package.json
+├── eslint.config.js
+├── jsconfig.json
+├── CHANGELOG.md
+└── README.md
+```
+
+## Technical Topics
+
+This project explores several areas relevant to software engineering and security:
+
+- VS Code Extension API
+- Webview architecture
+- Client-side rendering
+- Markdown parsing
+- HTML generation
+- JavaScript execution in Webviews
+- Content Security Policy
+- Script nonces
+- External resource policies
+- Document change events
+- Editor/Webview communication
+- Rendering untrusted document content
+- Automated testing
+- Static code analysis with ESLint
+
+## Security Considerations
+
+The project is not intended to be a security product.
+
+However, because it processes Markdown and injects generated content into a Webview, it provides a useful context for studying security boundaries around document rendering and Webview execution.
+
+Potential areas for future hardening include:
+
+- reducing or removing `unsafe-eval`;
+- avoiding unnecessary external CDN dependencies;
+- evaluating HTML sanitization requirements;
+- tightening Webview resource policies;
+- reviewing how user-controlled Markdown is transformed into HTML and SVG.
+
+## Status
+
+This project is currently a personal development project and remains under active experimentation.
+
+## Author
+
+**Azugaard**
+
+Engineering student interested in systems, networks, software development, and cybersecurity.
