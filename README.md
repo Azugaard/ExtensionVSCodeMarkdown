@@ -1,65 +1,54 @@
-# markdown-visualizer README
+# Markdown Visualizer
 
-This is the README for your extension "markdown-visualizer". After writing up a brief description, we recommend including the following sections.
+Une extension VS Code qui affiche un aperçu de tes documents Markdown avec diagrammes **Mermaid**, formules **KaTeX** et diaporamas **Marp**, et qui gère une bibliothèque de modèles réutilisables.
 
-## Features
+> Projet personnel en cours de développement (version 0.0.1).
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+## Fonctionnalités
 
-For example if there is an image subfolder under your extension project workspace:
+- **Aperçu Markdown** ouvert depuis le bouton de la barre de titre de l'éditeur (visible sur les fichiers Markdown) ou via la commande `markdown Preview`.
+- **Rendu** : Markdown, diagrammes Mermaid, formules KaTeX et présentations Marp.
+- **Export PDF** du document ouvert (commande `Export Markdown to PDF`).
+- **Modèles** : une vue dédiée dans la barre latérale pour créer, copier, modifier et supprimer des modèles, rangés par catégories (stockés dans `templates.json`).
 
-\!\[feature X\]\(images/feature-x.png\)
+## Réglages
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+Dans les paramètres VS Code, section *Markdown Visualizer* :
 
-## Requirements
+| Réglage | Valeurs | Défaut |
+|---|---|---|
+| `visualizer.preview.mermaidTheme` | `default`, `dark`, `forest`, `neutral`, `base` | `default` |
+| `visualizer.preview.updateMode` | `onType` (à la frappe), `onSave` (à l'enregistrement) | `onType` |
+| `visualizer.preview.fontSize` | de 10 à 40 | 16 |
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+## Installation depuis les sources
 
-## Extension Settings
+Prérequis : VS Code 1.97 ou plus, Node.js.
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+```bash
+git clone https://github.com/Azugaard/ExtensionVSCodeMarkdown.git
+cd ExtensionVSCodeMarkdown
+npm install
+```
 
-For example:
+Ouvre le dossier dans VS Code et appuie sur **F5** : une fenêtre « Extension Development Host » s'ouvre avec l'extension chargée.
 
-This extension contributes the following settings:
+L'export PDF utilise un navigateur téléchargé séparément, que prépare le script `npm run preparer-navigateurs`.
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+## Développement
 
-## Known Issues
+```bash
+npm run lint   # analyse du code avec ESLint
+npm test       # tests via vscode-test (lance le lint avant)
+```
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+## Structure
 
-## Release Notes
+- `extension.js` : point d'entrée (commandes, vue des modèles, surveillance de `templates.json`)
+- `renderer.mjs`, `scroll.js`, `templates.json` : rendu, synchronisation du défilement, modèles par défaut
+- `scripts/` : préparation des navigateurs pour l'export PDF
+- `test/` : tests de l'extension
 
-Users appreciate release notes as you update your extension.
+## Technologies
 
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code.  Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux)
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux)
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+JavaScript, API VS Code (WebView, vue en arbre), markdown-it, KaTeX, Mermaid, Marp, Puppeteer, ESLint.
